@@ -1,0 +1,106 @@
+﻿@using GMD.SarPlace.Dependencies;
+@using GMD.SarPlace.Etities;
+@{
+    Layout = "~/Pages/Layout/_BasicLayout.cshtml";
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+    var placeBll = DependencyResolver.Instance.placesLogic;
+    var commentBll = DependencyResolver.Instance.commentsLogic;
+    Guid placeId = Guid.Parse(Request.QueryString["placeID"]);
+    Place place = placeBll.GetById(placeId);
+    User userPlace = userBll.GetById(place.User_id);
+    User userCurrent = null;
+    if (User.Identity.IsAuthenticated)
+    {
+        userCurrent = userBll.GetById(Guid.Parse(User.Identity.Name));
+    }
+
+    if (IsPost)
+    {
+        if (Request.Form["TextInput"] != null)
+        {
+            var createText = Request.Form["TextInput"];
+
+            commentBll.Add(new Comment(userCurrent.ID, place.ID, createText));
+        }
+        if (Request.Form["deleteCommentBtn"] != null)
+        {
+            commentBll.Remove(Guid.Parse(Request.Form["deleteCommentBtn"]));
+        }
+    }
+
+    IEnumerable<Comment> comments = placeBll.GetCommentsByPlaceId(place.ID);
+}
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <div>
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">@place.Title</h5>
+                <p class="card-text">@place.Text</p>
+            </div>
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item">Пользователь: @userPlace.Name</li>
+                <li class="list-group-item">Дата публикации: @place.PublicationDate.ToShortDateString()</li>
+                <li class="list-group-item">
+                    Комментарии:
+                    <ol class="list-group list-group-numbered">
+
+                        @foreach (var comment in comments)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-start">
+                                <div class="ms-2 me-auto">
+                                    <div class="fw-bold">@userBll.GetById(comment.User_id).Name</div>
+                                    @comment.Text
+                                </div>
+
+                                @if (User.Identity.IsAuthenticated && User.Identity.Name == Convert.ToString(userBll.GetById(comment.User_id).ID) || User.IsInRole("redactor"))
+                                {
+                                    <form method="post">
+                                        <button name="deleteCommentBtn" value="@comment.ID" type="submit" class="btn btn-primary position-relative" id="areYouSure">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </li>
+
+                        }
+                    </ol>
+                    @if (User.Identity.IsAuthenticated)
+                    {
+                        <form method="post">
+                            <div class="input-group input-group-sm mb-3">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text" id="inputGroup-sizing-sm">Текст</span>
+                                </div>
+                                <textarea type="text" class="form-control" name="TextInput"
+                                          aria-label="Small" aria-describedby="inputGroup-sizing-sm"></textarea>
+                            </div>
+                            <input type="submit" class="btn btn-light" value="Submit" />
+                        </form>
+                    }
+                    else
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            Please log in for make a comment
+                        </div>
+                    }
+
+                </li>
+                @if (User.Identity.IsAuthenticated && User.Identity.Name == Convert.ToString(userPlace.ID) || User.IsInRole("redactor"))
+                {
+                    <li class="list-group-item">
+                        <a class="list-group-item list-group-item-action" href="~/Pages/PlaceEdit.cshtml?placeID=@place.ID">Изменение места</a>
+                        <a class="list-group-item list-group-item-action" href="~/Pages/DeletePlace.cshtml?placeID=@place.ID" id="areYouSure">Удалить место</a>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,54 @@
+﻿@using GMD.SarPlace.Dependencies;
+@using GMD.SarPlace.Etities;
+@{ 
+    var userBll = DependencyResolver.Instance.usersLogic;
+    User user;
+    if (User.Identity.IsAuthenticated)
+    {
+        user = userBll.GetById(Guid.Parse(User.Identity.Name));
+    }
+    else
+    {
+        user = null;
+    }
+}
+<style>
+    .navbar{
+        z-index: 2;
+    }
+</style>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="~/Index.cshtml">SarPlace</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item">
+                <a class="nav-link" href="~/Index.cshtml">Домашняя страница<span class="sr-only">(current)</span></a>
+            </li>
+            @if (!User.Identity.IsAuthenticated)
+            {
+                <li class="nav-item">
+                    <a class="nav-link" href="~/Pages/LogIn.cshtml">Авторизация</a>
+                </li>
+            }
+            @if (User.Identity.IsAuthenticated)
+            {
+
+                <li class="nav-item">
+                    <a class="nav-link" href="~/Pages/AddPlace.cshtml">Добавить место</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="~/Pages/LogOut.cshtml">Выйти</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="~/Pages/UserPage.cshtml">@user.Name</a>
+                </li>
+            }
+            <li class="nav-item">
+
+            </li>
+        </ul>
+    </div>
+</nav>

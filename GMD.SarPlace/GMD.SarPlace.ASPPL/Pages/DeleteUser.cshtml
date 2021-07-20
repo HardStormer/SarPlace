@@ -1,0 +1,21 @@
+﻿@using GMD.SarPlace.Dependencies;
+@{
+    Layout = "~/Pages/Layout/_BasicLayout.cshtml";
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+    Guid id = Guid.Parse(Request.QueryString["userID"]);
+
+    var user = userBll.GetById(id);
+
+    if (User.Identity.IsAuthenticated && Convert.ToString(user.ID) == User.Identity.Name || User.IsInRole("redactor"))
+    {
+        FormsAuthentication.SignOut();
+        userBll.Remove(id);
+        Response.Redirect("/");
+    }
+    else
+    {
+        Response.Redirect("/Pages/ErrorPage.cshtml");
+    }
+
+}

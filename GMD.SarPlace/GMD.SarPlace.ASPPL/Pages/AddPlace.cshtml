@@ -1,0 +1,72 @@
+﻿@using GMD.SarPlace.Dependencies;
+@using GMD.SarPlace.Etities;
+@{
+    Layout = "~/Pages/Layout/_BasicLayout.cshtml";
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+    var placeBll = DependencyResolver.Instance.placesLogic;
+    User currentUser = null;
+    if (User.Identity.IsAuthenticated)
+    {
+        currentUser = userBll.GetById(Guid.Parse(User.Identity.Name));
+    }
+    if (IsPost)
+    {
+        if (Request.Form["TitleInput"] != null && Request.Form["TextInput"] != null)
+        {
+            string createTitle = Request.Form["TitleInput"];
+            string createText = Request.Form["TextInput"];
+            Guid createUser_id = currentUser.ID;
+
+            var check = placeBll.Add(new Place(createTitle, createText, createUser_id));
+
+            Response.Redirect("~/Pages/PlaceView.cshtml?placeID=" + Convert.ToString(check.ID));
+        }
+    }
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <div>
+        @if (User.Identity.IsAuthenticated && User.Identity.Name == Convert.ToString(currentUser.ID))
+        {
+            <div>
+                <form method="post" data-name="UserForm">
+                    <fieldset>
+                        <legend>Добавление места</legend>
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroup-sizing-sm">Заголовок</span>
+                            </div>
+                            <input type="text" class="form-control" name="TitleInput"
+                                   aria-label="Small" aria-describedby="inputGroup-sizing-sm">
+                        </div>
+
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroup-sizing-sm">Текст</span>
+                            </div>
+                            <textarea type="text" class="form-control" name="TextInput"
+                                   aria-label="Small" aria-describedby="inputGroup-sizing-sm"></textarea>
+                        </div>
+
+                        <input type="submit" class="btn btn-light" value="Submit" />
+                    </fieldset>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger" role="alert">
+                Please log in for that
+            </div>
+        }
+    </div>
+</body>
+</html>

@@ -1,0 +1,203 @@
+﻿@using GMD.SarPlace.Dependencies;
+@using GMD.SarPlace.Etities;
+@{
+    Layout = null;
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+    var placeBll = DependencyResolver.Instance.placesLogic;
+    var commentBll = DependencyResolver.Instance.commentsLogic;
+    IEnumerable<Place> places = placeBll.GetAll();
+    IEnumerable<Comment> comments = commentBll.GetAll();
+    if (IsPost)
+    {
+        if (Request.Form["commentBtn"] != null)
+        {
+            Response.Redirect("~/Pages/PlaceView.cshtml?placeID=" + Request.Form["commentBtn"]);
+        }
+    }
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <style>
+        body {
+            overflow: hidden;
+            margin: 0;
+            text-rendering: optimizeLegibility;
+        }
+
+        .well {
+            position: relative;
+            overflow: hidden;
+            transition: 1s cubic-bezier(0.5, 0, 0.5, 1);
+            z-index: 1;
+        }
+
+        .top {
+            font-size: 80%;
+            color: hsla(0, 0%, 100%, .25);
+            position: relative;
+            top: -.2em;
+            cursor: pointer;
+        }
+
+        .panel {
+            position: relative;
+            height: 100vh;
+            overflow: hidden;
+            box-sizing: border-box;
+            z-index: 1;
+            cursor: default;
+            vertical-align: middle;
+        }
+    </style>
+    <div id="well" class="well">
+        @foreach (var place in places)
+        {
+            <div class="panel">
+                <div class="mx-auto" style="width: 20rem;">
+                    <div>
+                        <div class="card" style="width: 20rem;">
+                            <div class="card-body">
+                                <h5 class="card-title">@place.Title</h5>
+                                <p class="card-text">@place.Text</p>
+                            </div>
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">Пользователь: @userBll.GetById(place.User_id).Name</li>
+                                <li class="list-group-item">Дата публикации: @place.PublicationDate.ToShortDateString()</li>
+
+
+                            </ul>
+                            <div class="card-body">
+                                <div class="position-relative">
+                                    <form method="post">
+                                        <button name="commentBtn" value="@place.ID" type="submit" class="btn btn-primary position-relative">
+                                            Комментарии <i class="fas fa-comment"></i>
+                                            <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-secondary">
+                                                @placeBll.GetCommentsByPlaceId(place.ID).Count()
+                                            </span>
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+    </div>
+
+    <script>
+        (function () {
+            "use strict";
+            var pnls = document.querySelectorAll('.panel').length,
+                scdir, hold = false;
+
+            function _scrollY(obj) {
+                var slength, plength, pan, step = 100,
+                    vh = window.innerHeight / 100,
+                    vmin = Math.min(window.innerHeight, window.innerWidth) / 100;
+                if ((this !== undefined && this.id === 'well') || (obj !== undefined && obj.id === 'well')) {
+                    pan = this || obj;
+                    plength = parseInt(pan.offsetHeight / vh);
+                }
+                if (pan === undefined) {
+                    return;
+                }
+                plength = plength || parseInt(pan.offsetHeight / vmin);
+                slength = parseInt(pan.style.transform.replace('translateY(', ''));
+                if (scdir === 'up' && Math.abs(slength) < (plength - plength / pnls)) {
+                    slength = slength - step;
+                } else if (scdir === 'down' && slength < 0) {
+                    slength = slength + step;
+                } else if (scdir === 'top') {
+                    slength = 0;
+                }
+                if (hold === false) {
+                    hold = true;
+                    pan.style.transform = 'translateY(' + slength + 'vh)';
+                    setTimeout(function () {
+                        hold = false;
+                    }, 1000);
+                }
+                console.log(scdir + ':' + slength + ':' + plength + ':' + (plength - plength / pnls));
+            }
+            function _swipe(obj) {
+                var swdir,
+                    sX,
+                    sY,
+                    dX,
+                    dY,
+                    threshold = 100,
+                    slack = 50,
+                    alT = 500,
+                    elT,
+                    stT;
+                obj.addEventListener('touchstart', function (e) {
+                    var tchs = e.changedTouches[0];
+                    swdir = 'none';
+                    sX = tchs.pageX;
+                    sY = tchs.pageY;
+                    stT = new Date().getTime();
+                }, false);
+
+                obj.addEventListener('touchmove', function (e) {
+                    e.preventDefault();
+                }, false);
+
+                obj.addEventListener('touchend', function (e) {
+                    var tchs = e.changedTouches[0];
+                    dX = tchs.pageX - sX;
+                    dY = tchs.pageY - sY;
+                    elT = new Date().getTime() - stT;
+                    if (elT <= alT) {
+                        if (Math.abs(dX) >= threshold && Math.abs(dY) <= slack) {
+                            swdir = (dX < 0) ? 'left' : 'right';
+                        } else if (Math.abs(dY) >= threshold && Math.abs(dX) <= slack) {
+                            swdir = (dY < 0) ? 'up' : 'down';
+                        }
+                        if (obj.id === 'well') {
+                            if (swdir === 'up') {
+                                scdir = swdir;
+                                _scrollY(obj);
+                            } else if (swdir === 'down' && obj.style.transform !== 'translateY(0)') {
+                                scdir = swdir;
+                                _scrollY(obj);
+
+                            }
+                            e.stopPropagation();
+                        }
+                    }
+                }, false);
+            }
+            var well = document.getElementById('well');
+            well.style.transform = 'translateY(0)';
+            well.addEventListener('wheel', function (e) {
+                if (e.deltaY < 0) {
+                    scdir = 'down';
+                }
+                if (e.deltaY > 0) {
+                    scdir = 'up';
+                }
+                e.stopPropagation();
+            });
+            well.addEventListener('wheel', _scrollY);
+            _swipe(well);
+            var tops = document.querySelectorAll('.top');
+            for (var i = 0; i < tops.length; i++) {
+                tops[i].addEventListener('click', function () {
+                    scdir = 'top';
+                    _scrollY(well);
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

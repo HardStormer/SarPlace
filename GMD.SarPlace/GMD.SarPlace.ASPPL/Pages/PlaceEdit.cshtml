@@ -1,0 +1,69 @@
+﻿@using GMD.SarPlace.Dependencies;
+@{
+    Layout = "~/Pages/Layout/_BasicLayout.cshtml";
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+    var placeBll = DependencyResolver.Instance.placesLogic;
+    Guid id = Guid.Parse(Request.QueryString["placeID"]);
+
+    var place = placeBll.GetById(id);
+
+    if (IsPost)
+    {
+        if (Request.Form["TitleInput"] != null && Request.Form["TextInput"] != null)
+        {
+            place.Title = Request.Form["TitleInput"];
+            place.Text = Request.Form["TextInput"];
+
+            placeBll.Edit(place);
+
+            Response.Redirect("~/Pages/PlaceView.cshtml?placeID=" + Convert.ToString(id));
+        }
+    }
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    <div>
+        @if (User.Identity.IsAuthenticated && User.Identity.Name == Convert.ToString(place.User_id) || User.IsInRole("redactor"))
+        {
+            <div>
+                <form method="post" data-name="UserForm">
+                    <fieldset>
+                        <legend>Редактирование места</legend>
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroup-sizing-sm">Заголовок</span>
+                            </div>
+                            <input type="text" class="form-control" name="TitleInput"
+                                   aria-label="Small" aria-describedby="inputGroup-sizing-sm" value="@place.Title">
+                        </div>
+
+                        <div class="input-group input-group-sm mb-3">
+                            <div class="input-group-prepend">
+                                <span class="input-group-text" id="inputGroup-sizing-sm">Текст</span>
+                            </div>
+                            <textarea type="text" class="form-control" name="TextInput"
+                                      aria-label="Small" aria-describedby="inputGroup-sizing-sm">@place.Text</textarea>
+                        </div>
+
+                        <input type="submit" class="btn btn-light" value="Submit" />
+                    </fieldset>
+                </form>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger" role="alert">
+                Please log in for that
+            </div>
+        }
+    </div>
+</body>
+</html>

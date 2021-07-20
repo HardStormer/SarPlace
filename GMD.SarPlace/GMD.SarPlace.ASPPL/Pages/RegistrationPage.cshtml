@@ -1,0 +1,99 @@
+﻿@using GMD.SarPlace.Dependencies;
+@using GMD.SarPlace.Etities;
+@{
+    Layout = "~/Pages/Layout/_BasicLayout.cshtml";
+
+    var userBll = DependencyResolver.Instance.usersLogic;
+
+    if (IsPost)
+    {
+        string createName = Request.Form["NameInput"];
+        string createPass = Request.Form["PassInput"];
+
+        List<User> users = (List<User>)userBll.GetAll();
+
+        var login = true;
+
+        foreach (var user in users)
+        {
+            if (user.Name == createName)
+            {
+                login = false;
+            }
+        }
+
+        if (createName != "" && createPass != "" && login == true)
+        {
+            User newUser = new User(createName, createPass);
+            userBll.Add(newUser);
+            FormsAuthentication.SetAuthCookie(newUser.ID.ToString(), createPersistentCookie: true);
+            <div class="alert alert-success" role="alert">
+                Успешно добавлено!
+            </div>
+            Response.Redirect("/");
+        }
+        else if (login == false)
+        {
+            <div class="alert alert-danger" role="alert">
+                Этот логин уже используется!
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-danger" role="alert">
+                Некоторые поля пусты!
+            </div>
+        }
+    }
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+</head>
+<body>
+    @if (!User.Identity.IsAuthenticated)
+    {
+        <div class="mx-auto" style="width: 20rem;">
+            <form method="post" data-name="UserForm">
+                <fieldset>
+                    <legend>Регистрация</legend>
+                    <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">Логин</span>
+                        </div>
+                        <input type="email" class="form-control" name="NameInput"
+                               aria-label="Small" aria-describedby="inputGroup-sizing-sm">
+                    </div>
+
+                    <div class="input-group input-group-sm mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text" id="inputGroup-sizing-sm">Пароль</span>
+                        </div>
+                        <input type="password" class="form-control" name="PassInput"
+                               aria-label="Small" aria-describedby="inputGroup-sizing-sm">
+                    </div>
+
+                    <input type="submit" class="btn btn-light" value="Submit" />
+                </fieldset>
+            </form>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-danger" role="alert">
+            Вы уже авторизованы!
+        </div>
+
+        <script>
+            function Redirect() {
+                window.location = "/";
+            }
+            setTimeout('Redirect()', 5000);
+        </script>
+    }
+</body>
+</html>
